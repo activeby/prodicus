@@ -1,5 +1,5 @@
 {
-  "name": "echobot",
+  "name": "Prodicus!",
   "version": "1.0.0",
   "description": "A sample bot for getting started with Bot Framework",
   "main": "server.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fuselabs/echobot.git"
+    "url": "git+https://github.com/activeby/prodicus.git"
   },
   "keywords": [
     "botframework"
