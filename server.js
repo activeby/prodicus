@@ -112,3 +112,29 @@ function serviceList(session) {
 
   return card;
 }
+
+var model = process.env.model || 'https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/b8ac99e4-3e42-4bb4-8fa3-eec10e4de189?subscription-key=88ec7ba1fb364eb590fdb5764bf73f7f&timezoneOffset=0.0&verbose=true&q=';
+var recognizer = new builder.LuisRecognizer(model);
+var intents = new builder.IntentDialog({ recognizers: [recognizer] });
+intents.onDefault(builder.DialogAction.send("I'm sorry. I didn't understand."));
+bot.dialog('/', intents);
+
+intents.matches('buy', [
+    function (session, args, next) {
+      debugger;
+        var e = builder.EntityRecognizer.findEntity(args.entities, 'hosting');
+        if (!e) {
+            builder.Prompts.text(session, "Which hosting do you want?");
+        } else {
+            next({ response: e.entity });
+        }
+    },
+    function (session, results) {
+        if (results.response) {
+            // ... save task
+            session.send("ok, there is list of %s", results.response);
+        } else {
+            session.send("no response");
+        }
+    }
+]);
