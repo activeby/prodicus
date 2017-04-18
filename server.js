@@ -1,6 +1,6 @@
 var restify = require('restify');
 var builder = require('botbuilder');
-// var Store = require('./localhost');
+var Store = require('./localhost');
 
 // Get secrets from server environment
 var botConnectorOptions = {
