@@ -230,6 +230,23 @@ bot.dialog('Mail', [
   }
 ]);
 
+bot.dialog('call', [
+  function(session){
+    if(isAuth(session)){
+      session.endDialog('Okay, %s. We call to you as soon as possible. Thanks!')
+    } else {
+      builder.Prompts.number(session, 'Enter your phone number');
+    }
+  },
+  function(session, results){
+    session.endDialog('We call to %s as soon as possible. Thanks!', results.response)
+  }
+]).triggerAction({
+  matches: 'call',
+  onInterrupted: function (session) {
+    session.send('I have benn broken');
+  }
+});
 // helpers
 function planAsAttachment(plan) {
   return new builder.HeroCard()
@@ -306,7 +323,7 @@ function createRootMenu(session) {
   card.buttons([
       new builder.CardAction(session).title('Buy service').value('Buy').type('imBack'),
       new builder.CardAction(session).title('Support').value('Support').type('imBack'),
-      new builder.CardAction(session).title('Call').value('Call').type('imBack'),
+      new builder.CardAction(session).title('I want a call').value('call').type('imBack'),
   ]).text(`What would you like to do?`);
 
   return card;
