@@ -163,7 +163,7 @@ bot.dialog('Buy', [
         session.beginDialog('Domain', args);
       } else if (mail) {
         session.endDialog();
-        session.endDialog('Mail', args);
+        session.beginDialog('Mail', args);
       } else if (hosting) {
         session.endDialog();
         session.beginDialog('Hosting', args);
@@ -217,12 +217,8 @@ bot.dialog('Hosting', [
 ])
 
 bot.dialog('Mail', [
-  function (session, args) {
-    builder.Prompts.number(session, 'How much people use it?');
-  },
   function (session, response) {
-    session.dialogData.people_count = response.response
-    builder.Prompts.number(session, 'How much cost use it?');
+    builder.Prompts.number(session, 'Please, add limit plan count');
   },
   function (session, response) {
     session.dialogData.cost = response.response
@@ -272,7 +268,7 @@ function domainStep(session, args) {
 function createDomainMenu(session) {
   const card = new builder.ThumbnailCard(session);
   card.buttons([
-      new builder.CardAction(session).title('Ru').value('Buy domain us').type('imBack'),
+      new builder.CardAction(session).title('Us').value('Buy domain us').type('imBack'),
       new builder.CardAction(session).title('Com').value('Buy domain com').type('imBack'),
   ]).text(`What kind of domain?`);
 
