@@ -39,7 +39,7 @@ bot.dialog('help', function (session) {
 
 bot.dialog('domain', [
   function (session, args, next) {
-    session.send('DOmain!!!!!! \'%s\'', session.message.text);
+    session.send(' \'%s\'', session.message.text);
   },
 ]).triggerAction({
     matches: 'domain'
@@ -47,7 +47,15 @@ bot.dialog('domain', [
 
 bot.dialog('Buy', [
   function (session, args, next) {
-    session.send('Welcome to the Store! We are analyzing your message: \'%s\'', session.message.text);
+    var domain = builder.EntityRecognizer.findEntity(args.intent.entities, 'domain');
+    var mail = builder.EntityRecognizer.findEntity(args.intent.entities, 'mail');
+    if (domain) {
+      session.send('Domain: \'%s\'', session.message.text);
+    } else if (mail) {
+      session.send('Mail: \'%s\'', session.message.text);
+    } else {
+      session.send('Welcome to the Store! We are analyzing your message: \'%s\'', session.message.text);
+    }
   },
 ]).triggerAction({
     matches: 'Buy',
