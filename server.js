@@ -1,5 +1,6 @@
 var restify = require('restify');
 var builder = require('botbuilder');
+var Store = require('./localhost');
 
 // Get secrets from server environment
 var botConnectorOptions = {
@@ -43,25 +44,6 @@ bot.dialog('help', function (session) {
     session.endDialog(msg);
 }).triggerAction({
     matches: 'help'
-});
-
-bot.dialog('Buy', [
-  function (session, args, next) {
-    var domain = builder.EntityRecognizer.findEntity(args.intent.entities, 'domain');
-    var mail = builder.EntityRecognizer.findEntity(args.intent.entities, 'mail');
-    if (domain) {
-      session.send('Domain: \'%s\'', session.message.text);
-    } else if (mail) {
-      session.send('Mail: \'%s\'', session.message.text);
-    } else {
-      session.send('Welcome to the Store! We are analyzing your message: \'%s\'', session.message.text);
-    }
-  },
-]).triggerAction({
-    matches: 'Buy',
-    onInterrupted: function (session) {
-        session.send('Please provide a destination');
-    }
 });
 
 bot.dialog('Support', [
@@ -169,7 +151,134 @@ bot.dialog('profile', [
   }
 });
 
+bot.dialog('Buy', [
+  function (session, args, next) {
+    if (args.intent.entities.length != 0) {
+      var domain = builder.EntityRecognizer.findEntity(args.intent.entities, 'domain');
+      var mail = builder.EntityRecognizer.findEntity(args.intent.entities, 'mail');
+      var hosting = builder.EntityRecognizer.findEntity(args.intent.entities, 'hosting');
+
+      if (domain) {
+        session.endDialog();
+        session.beginDialog('Domain', args);
+      } else if (mail) {
+        session.endDialog();
+        session.endDialog('Mail', args);
+      } else if (hosting) {
+        session.endDialog();
+        session.beginDialog('Hosting', args);
+      } else {
+        var action = createServiceMenu(session);
+        var msg = new builder.Message(session).addAttachment(action);
+
+        session.send(session, 'Sorry, I don\'t understand. We have only domain, hosting, mail. What you want buy?');
+        session.endDialog(msg);
+      }
+    } else {
+      var action = createServiceMenu(session);
+      var msg = new builder.Message(session).addAttachment(action);
+
+      session.endDialog(msg);
+    };
+  }
+]).triggerAction({
+    matches: 'Buy',
+    onInterrupted: function (session) {
+      session.send('Please provide a destination');
+    }
+});
+
+bot.dialog('Domain', [
+  function (session, args, next) {
+    domainStep(session, args);
+  },
+]);
+
+bot.dialog('Hosting', [
+  function (session, args) {
+    builder.Prompts.number(session, 'How much people use it?');
+  },
+  function (session, response) {
+    session.dialogData.people_count = response.response
+    builder.Prompts.number(session, 'How much plans do you show?');
+  },
+  function (session, response) {
+    session.dialogData.limit = response.response
+    Store
+      .getPlans(session.dialogData.limit)
+      .then(function (plans) {
+        session.send('I found %d plans:', plans.length);
+        var message = new builder.Message()
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments(plans.map(planAsAttachment));
+        session.endDialog(message);
+      });
+  }
+])
+
+bot.dialog('Mail', [
+  function (session, args) {
+    builder.Prompts.number(session, 'How much people use it?');
+  },
+  function (session, response) {
+    session.dialogData.people_count = response.response
+    builder.Prompts.number(session, 'How much cost use it?');
+  },
+  function (session, response) {
+    session.dialogData.cost = response.response
+    session.endDialog('We have some subscriptions for you!!!')
+  }
+]);
+
 // helpers
+function planAsAttachment(plan) {
+  return new builder.HeroCard()
+      .title(plan.name)
+      .subtitle('Plan period %s. Recurring fee %s', plan.plan_period_name, plan.price)
+      .buttons([
+          new builder.CardAction()
+              .title('Order')
+              .type('openUrl')
+              .value(plan.shopping_cart_url)
+      ]);
+}
+function createServiceMenu(session) {
+  const card = new builder.ThumbnailCard(session);
+  card.buttons([
+      new builder.CardAction(session).title('Hosting').value('Buy hosting').type('imBack'),
+      new builder.CardAction(session).title('Domain').value('Buy domain').type('imBack'),
+      new builder.CardAction(session).title('Mail').value('Buy mail').type('imBack'),
+  ]).text(`What kind of service you want?`);
+
+  return card;
+}
+
+function domainStep(session, args) {
+  var com = builder.EntityRecognizer.findEntity(args.intent.entities, 'com');
+  var us = builder.EntityRecognizer.findEntity(args.intent.entities, 'us');
+  if (com) {
+    session.send('Please go to link')
+    session.endDialog('[AP](http://localhost:3000/external_dispatcher/settle?shopping_cart_items%5B%5D%5Btype%5D=domain&shopping_cart_items%5B%5D%5Bname%5D=domain12312312.com/&shopping_cart_items%5B%5D%5Bplan_id%5D=14&shopping_cart_items%5B%5D%5Bplan_period_id%5D=27&skip_all_steps=1)')
+  } else if (us) {
+    session.endDialog('You buy us domain');
+  } else {
+    var action = createDomainMenu(session);
+    var msg = new builder.Message(session).addAttachment(action);
+
+    session.endDialog(msg);
+  }
+}
+
+function createDomainMenu(session) {
+  const card = new builder.ThumbnailCard(session);
+  card.buttons([
+      new builder.CardAction(session).title('Ru').value('Buy domain us').type('imBack'),
+      new builder.CardAction(session).title('Com').value('Buy domain com').type('imBack'),
+  ]).text(`What kind of domain?`);
+
+  return card;
+}
+
 function buildSupportMenu(session){
   const card = new builder.ThumbnailCard(session);
     card.buttons([
