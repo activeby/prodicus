@@ -117,7 +117,7 @@ var model = process.env.model || 'https://westus.api.cognitive.microsoft.com/lui
 var recognizer = new builder.LuisRecognizer(model);
 var intents = new builder.IntentDialog({ recognizers: [recognizer] });
 intents.onDefault(builder.DialogAction.send("I'm sorry. I didn't understand."));
-bot.dialog('/', intents);
+// bot.dialog('/', intents);
 
 intents.matches('buy', [
     function (session, args, next) {
