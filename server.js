@@ -26,8 +26,12 @@ var bot = new builder.UniversalBot(connector, function (session) {
 var recognizer = new builder.LuisRecognizer('https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/b8ac99e4-3e42-4bb4-8fa3-eec10e4de189?subscription-key=88ec7ba1fb364eb590fdb5764bf73f7f&timezoneOffset=0.0&verbose=true&q=');
 bot.recognizer(recognizer);
 
+function isAuth(session){
+  return session.message.user.id != 'default-user'
+}
+
 bot.dialog('help', function (session) {
-    if(session.message.user.id != 'default-user'){
+    if(isAuth(session)){
       session.send('Hi, %s', session.message.user.name)
     } else {
       session.send('Hi!');
@@ -67,15 +71,15 @@ bot.dialog('Support', [
     var cloud = builder.EntityRecognizer.findEntity(args.intent.entities, 'cloud');
 
     if(cloud){
-      session.send('Oh, i see u have problem with clouds')
+      session.send('Oh, i understand u have problem with clouds')
       session.endDialog();
       session.beginDialog('cloudchannel', cloud)
     } else if (hosting) {
-      session.send('Oh, i see u have problem with hosting')
+      session.send('Oh, i understand u have problem with hosting')
       session.endDialog();
       session.beginDialog('hostingchannel', hosting)
     } else if (domain) {
-      session.send('Oh, i see u have problem with domains')
+      session.send('Oh, i understand u have problem with domains')
       session.endDialog();
       session.beginDialog('domainchannel', domain)
     } else {
@@ -89,18 +93,18 @@ bot.dialog('Support', [
 ]).triggerAction({
   matches: 'Support',
   onInterrupted: function (session) {
-    session.send('something went wrong');
+    session.send('I have been broken.');
   }
 });
 
 bot.dialog('cloudchannel', [
   function(session, args, next){
-    session.send('there is cloud support channel');
+    session.send('This is Cloud support channel');
     let action = buildEntMenu(session);
     let msg = new builder.Message(session).addAttachment(action);
     session.send(msg);
 
-    builder.Prompts.text(session, 'Describe your problem or follow buttons');
+    builder.Prompts.text(session, 'Describe your problem or follow buttons: ');
   },
   function(session, results){
     let link = 'http://www.active.by/ru-by/it-consulting/sla.html'
@@ -110,7 +114,7 @@ bot.dialog('cloudchannel', [
 
 bot.dialog('hostingchannel', [
   function(session, args, next){
-    session.send('there is hosting support channel');
+    session.send('This is hosting support channel');
     let action = buildEntMenu(session);
     let msg = new builder.Message(session).addAttachment(action);
     session.send(msg);
@@ -123,11 +127,11 @@ bot.dialog('hostingchannel', [
 ]);
 bot.dialog('domainchannel', [
   function(session, args, next){
-    session.send('there is domain support channel');
+    session.send('This is Domain support channel.');
     let action = buildEntMenu(session);
     let msg = new builder.Message(session).addAttachment(action);
     session.send(msg);
-    builder.Prompts.text(session, 'Describe your problem');
+    builder.Prompts.text(session, 'Describe your problem: ');
   },
   function(session, results){
     let link = 'http://www.active.by/ru-by/services/domains/'
@@ -137,23 +141,31 @@ bot.dialog('domainchannel', [
 
 bot.dialog('mailbox', [
   function(session, args, next){
-    session.endDialog('To change ur mailbox size or other manipulations follow the link, %s', 'https://link_to_mailbox.com');
+    if(isAuth(session)){
+      session.endDialog('To change your mailbox size or do some other manipulations follow the link, %s', 'http://localhost:3000/accounts/1/subscriptions/2017');
+    } else {
+      session.endDialog('Please, authorize.')
+    }
   }
 ]).triggerAction({
   matches: 'mailbox',
   onInterrupted: function (session) {
-    session.send('something went wrong');
+    session.send('I have been broken.');
   }
 });
 
 bot.dialog('profile', [
   function(session, args, next){
-    session.endDialog('To make manipulations with profile or user, follow link %s', 'https://profile_edit.com');
+    if(isAuth(session)){
+      session.endDialog('To make manipulations with profile or user, follow link %s', 'http://localhost:3000/profile');
+    } else {
+      session.endDialog('You need to be authorized to perform this action.')
+    }
   }
 ]).triggerAction({
   matches: 'profile',
   onInterrupted: function (session) {
-    session.send('something went wrong');
+    session.send('I have benn broken');
   }
 });
 
@@ -161,9 +173,9 @@ bot.dialog('profile', [
 function buildSupportMenu(session){
   const card = new builder.ThumbnailCard(session);
     card.buttons([
-        new builder.CardAction(session).title('support hosting').value('support hosting').type('imBack'),
-        new builder.CardAction(session).title('support domain').value('support domain').type('imBack'),
-        new builder.CardAction(session).title('support cloud').value('support cloud').type('imBack'),
+        new builder.CardAction(session).title('Hosting support').value('Hosting support').type('imBack'),
+        new builder.CardAction(session).title('Domain support').value('Domain support').type('imBack'),
+        new builder.CardAction(session).title('Cloud support').value('Cloud support').type('imBack'),
     ]).text(`Which type of help do you need?`);
 
   return card;
@@ -172,9 +184,9 @@ function buildSupportMenu(session){
 function buildEntMenu(session){
   const card = new builder.ThumbnailCard(session);
     card.buttons([
-        new builder.CardAction(session).title('doesnt work').value('doesnt work').type('imBack'),
-        new builder.CardAction(session).title('cant buy').value('cant buy').type('imBack'),
-        new builder.CardAction(session).title('additional').value('additional').type('imBack')
+        new builder.CardAction(session).title('It doesnt work').value('It doesnt work').type('imBack'),
+        new builder.CardAction(session).title('I have problems with payment').value('I have problems with payment').type('imBack'),
+        new builder.CardAction(session).title('I have additional questions').value('I have additional questions').type('imBack')
     ]).text(`Which type of help do you need?`);
 
   return card;
