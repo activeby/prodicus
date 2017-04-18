@@ -54,7 +54,7 @@ function createRootMenu(session) {
       new builder.CardAction(session).title('Buy service').value('Buy').type('imBack'),
       new builder.CardAction(session).title('Support').value('Support').type('imBack'),
       new builder.CardAction(session).title('Call').value('Call').type('imBack'),
-      new builder.CardAction(session).title(session.message.user).value('Buy').type('imBack'),
+      new builder.CardAction(session).title(session.message.user.id).value('Buy').type('imBack'),
   ]).text(`What would you like to do?`);
 
   return card;
